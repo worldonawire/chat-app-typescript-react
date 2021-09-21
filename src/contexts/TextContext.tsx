@@ -6,13 +6,47 @@ import React, {
 	FC,
 } from "react";
 
-type UserState = {
-	user: string;
+type TextState = {
+	text: string;
 };
 
-type UserAction = {
-	type: "USER";
+interface TextStateProps {
+	children: ReactNode;
+}
+type TextAction = {
+	type: string;
 	payload: string;
 };
 
-type UserDispatch = (action: UserAction) => void;
+type TextDispatch = (action: TextAction) => void;
+
+/* instead of creating one context and destructing later, create two now and export the context = neater */
+const TextStateContext = createContext({} as TextState);
+const TextDispatchContext = createContext({} as TextDispatch);
+
+const textReducer = (state: TextState, action: TextAction) => {
+	switch (action.type) {
+		case "TEXT":
+			return {
+				...state,
+				text: action.payload,
+			};
+		default:
+			throw new Error(`Unkown action type: ${action.type}`);
+	}
+};
+
+export const TextProvider: FC<TextStateProps> = ({ children }: { children: ReactNode }) => {
+    const [state, dispatch] = useReducer(textReducer, { text: "h" });
+	return (
+		<TextDispatchContext.Provider value={dispatch}>
+			<TextStateContext.Provider value={state}>
+				{children}
+			</TextStateContext.Provider>
+		</TextDispatchContext.Provider>
+	);
+};
+
+/* the export of the above two createContext functions */
+export const useTextState = () => useContext(TextStateContext);
+export const useTextDispatch = () => useContext(TextDispatchContext);
