@@ -2,13 +2,11 @@ import React, { useState, ChangeEvent, useEffect } from "react";
 import { gql, useMutation } from "@apollo/client";
 import { Form, SendButton, TextArea } from "./styles";
 
-// import { useUserState } from "../../contexts/UserContext";
-// import { useChannelState } from "../../contexts/ChannelContext";
-// import { useTextState } from "../../contexts/TextContext";
 import { useErrorDispatch } from "../../contexts/ErrorContext";
 import { FaPaperPlane } from "react-icons/fa";
 import { useChannelState } from "../../contexts/ChannelContext";
 import { useUserState } from "../../contexts/UserContext";
+import { useTextDispatch, useTextState } from "../../contexts/TextContext";
 
 const POST_MESSAGE = gql`
 	mutation postMessage($channelId: String!, $text: String!, $userId: String!) {
@@ -29,11 +27,18 @@ interface PostMessageObject {
 	messageId?: string;
 }
 
+type TextAction = {
+    type: string;
+    payload: string;
+}
+type TextDispatch = (action: TextAction) => void;
+
 export default function PostMessage(): JSX.Element {
 	let errorDispatch = useErrorDispatch();
 	let userState = useUserState();
 	let channelState = useChannelState();
-	// let textState = useTextState();
+    let textState = useTextState();
+    let dispatch: TextDispatch = useTextDispatch();
 	const [message, setMessage] = useState<PostMessageObject>(
 		{} as PostMessageObject
 	);
@@ -41,15 +46,25 @@ export default function PostMessage(): JSX.Element {
 	console.log("Message: ", message);
 	const [postMessage, { error }] = useMutation(POST_MESSAGE);
 	console.log("First error check: ", { error });
+    // let textValue: string = "";
+    useEffect(() => {
+        // if (textState) {
+        //     textValue = textState.text;
+        // }
 
-	useEffect(() => {
 		setMessage({
 			...message,
 			channelId: channelState.channel.channelID,
-			text: "",
+			text: textState.text,
 			userId: userState.user,
 		});
-	}, [userState, channelState]);
+    }, [userState, channelState]);
+    
+    // useEffect(() => {
+    //     if (message.text) {
+    //         dispatch({type: "TEXT", payload: message.text})
+    //     }
+    // }, [message])
 
 	let errorMessage: string | undefined;
 	if (
@@ -69,10 +84,9 @@ export default function PostMessage(): JSX.Element {
 	}
 
 	const handleSubmit = (e: React.SyntheticEvent<HTMLFormElement>) => {
-		e.preventDefault();
-		console.log("Message is: ", message);
+        e.preventDefault();
+        dispatch({ type: "TEXT", payload: "" });
 		e.currentTarget.reset();
-
 		postMessage({ variables: message })
 			.then((result) => {
 				console.log("Message sent");
@@ -86,8 +100,10 @@ export default function PostMessage(): JSX.Element {
 				});
 			});
 	};
-
-	const handleChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
+    // e: ChangeEvent<HTMLTextAreaElement>
+    const handleChange = (e: ChangeEvent<HTMLTextAreaElement>, dispatch: TextDispatch) => {
+        let text = e.target.value;
+        dispatch({ type: "TEXT", payload: text })
 		setMessage({ ...message, text: e.target.value });
 	};
 
@@ -98,7 +114,8 @@ export default function PostMessage(): JSX.Element {
 					<TextArea
 						name="mssg"
 						placeholder="Type your message here..."
-						onChange={handleChange}
+                        onChange={e => handleChange(e, dispatch)}
+                        // value={textValue}
 					/>
 				</label>
 
@@ -110,3 +127,5 @@ export default function PostMessage(): JSX.Element {
 		</Form>
 	);
 }
+
+

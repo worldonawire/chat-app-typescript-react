@@ -72,23 +72,33 @@ export default function ChatBoard() {
     const [state, setState] = useState<MessageObject[] | ErrorMessageObject[]>(
         []
     );
-    let errorChat = useRef<string | boolean>(false);
+    // let errorChat = useRef<string | boolean>(false);
     useEffect(() => {
         if (errorState.errMessage.timeAtError !== undefined) {
-            errorChat.current = "something";
+            // errorChat.current = "something";
+            errorDispatch({
+                        type: "ERROR_MESSAGE",
+                        payload: {
+                            ...errorState.errMessage,
+                            messageId: "",
+                            text: "",
+                            userId: "",
+                            timeAtError: undefined,
+                        },
+                    });
             setState([errorState.errMessage, ...state]);
-            return function cleanUp() {
-                errorDispatch({
-                    type: "ERROR_MESSAGE",
-                    payload: {
-                        ...errorState.errMessage,
-                        messageId: "",
-                        text: "",
-                        userId: "",
-                        timeAtError: undefined,
-                    },
-                });
-            };
+            // return function cleanUp() {
+            //     errorDispatch({
+            //         type: "ERROR_MESSAGE",
+            //         payload: {
+            //             ...errorState.errMessage,
+            //             messageId: "",
+            //             text: "",
+            //             userId: "",
+            //             timeAtError: undefined,
+            //         },
+            //     });
+            // };
         }
     }, [errorState]);
 
@@ -161,7 +171,7 @@ export default function ChatBoard() {
     }, [fetchMoreData]);
 
     const fetchHandler = (e: MouseEvent<HTMLButtonElement>) => {
-        console.log("Inside handler");
+        e.preventDefault()
         let mssgId;
         persistBool.current = e.currentTarget.value;
 
@@ -316,7 +326,7 @@ export default function ChatBoard() {
                         ))
                     ) : null}
                 </ChatRow>
-                {errorChat ? <div>Hey</div> : null}
+                {/* {errorChat ? <div>Hey</div> : null} */}
                 {emptyChat ? null : (
                     <FetchButton value="false" onClick={fetchHandler}>
                         Read More

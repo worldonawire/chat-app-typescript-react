@@ -14,6 +14,7 @@ import { onError } from "@apollo/client/link/error";
 import { ErrorProvider } from "./contexts/ErrorContext";
 import Navbar from "./components/Navbar.tsx";
 import ChatBoard from "./components/ChatBoard.tsx";
+import { TextProvider } from "./contexts/TextContext";
 
 const httpLink = new HttpLink({
 	uri: "https://angular-test-backend-yc4c5cvnnq-an.a.run.app/graphql",
@@ -48,7 +49,8 @@ function App() {
 	return (
 		<ApolloProvider client={client}>
 			<UserProvider>
-				<ChannelProvider>
+        <ChannelProvider>
+          <TextProvider>
 					<ErrorProvider>
             			<GlobalStyle />
 							<Container>
@@ -56,6 +58,7 @@ function App() {
 								<ChatBoard />	
 							</Container>
 					</ErrorProvider>
+          </TextProvider>
 				</ChannelProvider>
 			</UserProvider>
 		</ApolloProvider>
