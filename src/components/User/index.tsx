@@ -6,7 +6,7 @@ export default function User() {
 	const dispatch = useUserDispatch();
 	return (
 		<div>
-			<label>1. Choose you User</label>
+			<label>1. Choose your User</label>
 			<br></br>
 			<br></br>
 			<Select
