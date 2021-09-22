@@ -64,7 +64,8 @@ export const ChooseChannel = styled.ul`
         width: 100%; 
         padding: 10px 1rem; 
         cursor: pointer; 
-        background-color: #F4F5FB; 
+        background-color: #F4F5FB;
+        cursor: pointer 
     }
 
     li:hover {

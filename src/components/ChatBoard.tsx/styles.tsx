@@ -134,4 +134,11 @@ export const FetchButton = styled.button`
 	border-radius: 0.25rem;
 	justify-content: space-evenly;
 	align-items: center;
+	cursor: pointer;
+
+	transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+
+	:hover{
+     background: #138496;
+}
 `;

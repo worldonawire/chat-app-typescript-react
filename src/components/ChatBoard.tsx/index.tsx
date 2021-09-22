@@ -23,6 +23,7 @@ import {
 } from "react-icons/fa";
 import { Col } from "../../App.styles";
 import { useErrorDispatch, useErrorState } from "../../contexts/ErrorContext";
+import { useSentState } from "../../contexts/SentContext";
 
 const LATEST_MESSAGES = gql`
 	query fetchLatestMessages($channelId: String!) {
@@ -68,27 +69,38 @@ export default function ChatBoard() {
     let channelState = useChannelState();
     let errorState = useErrorState();
     let errorDispatch = useErrorDispatch();
+    let sentState = useSentState()
 
     const [state, setState] = useState<MessageObject[] | ErrorMessageObject[]>(
         []
     );
-    let errorChat = useRef<string | boolean>(false);
+    // let errorChat = useRef<string | boolean>(false);
     useEffect(() => {
         if (errorState.errMessage.timeAtError !== undefined) {
-            errorChat.current = "something";
+            // errorChat.current = "something";
+            // errorDispatch({
+            //             type: "ERROR_MESSAGE",
+            //             payload: {
+            //                 ...errorState.errMessage,
+            //                 messageId: "",
+            //                 text: "",
+            //                 userId: "",
+            //                 timeAtError: undefined,
+            //             },
+            //         });
             setState([errorState.errMessage, ...state]);
-            return function cleanUp() {
-                errorDispatch({
-                    type: "ERROR_MESSAGE",
-                    payload: {
-                        ...errorState.errMessage,
-                        messageId: "",
-                        text: "",
-                        userId: "",
-                        timeAtError: undefined,
-                    },
-                });
-            };
+            // return function cleanUp() {
+            //     errorDispatch({
+            //         type: "ERROR_MESSAGE",
+            //         payload: {
+            //             ...errorState.errMessage,
+            //             messageId: "",
+            //             text: "",
+            //             userId: "",
+            //             timeAtError: undefined,
+            //         },
+            //     });
+            // };
         }
     }, [errorState]);
 
@@ -97,24 +109,35 @@ export default function ChatBoard() {
     /* -------------------Fetch initial messages--------------------- */
     const { loading, data, error, refetch } = useQuery(LATEST_MESSAGES, {
         variables: { channelId: channelState.channel.channelID },
-
+        
         errorPolicy: "all",
     });
-    let emptyChat: boolean = false;
+    let emptyChat = useRef(true)
+    // let emptyChat: boolean = false;
     let stateLoading: boolean = false;
 
+    let timeAtRender = useRef(Date.now())
+    let firstAndLast = useRef<MessageObject[]>([]);
     useEffect(() => {
         if (data) {
-            refetch();
-        }
+            refetch()
+            firstAndLast.current[0] = data.fetchLatestMessages[0];
+            firstAndLast.current[1] = data.fetchLatestMessages[data.fetchLatestMessages.length-1];
+            setState(data.fetchLatestMessages)    
+        } 
     }, [channelState.channel.timeAtClick]);
 
+  
     useEffect(() => {
         if (!data || loading) {
             stateLoading = true;
         } else if (data.fetchLatestMessages.length === 0) {
-            emptyChat = true;
+            emptyChat.current = true;
+            setState([])
         } else if (data.fetchLatestMessages.length > 0) {
+            firstAndLast.current[0] = data.fetchLatestMessages[0];
+            firstAndLast.current[1] = data.fetchLatestMessages[data.fetchLatestMessages.length-1];
+            emptyChat.current = false;
             setState(data.fetchLatestMessages);
         }
         console.log("Messages: ", state);
@@ -137,66 +160,49 @@ export default function ChatBoard() {
         { loading: fetchMoreLoading, data: fetchMoreData, error: fetchMoreErrors },
     ] = useLazyQuery(FETCH_MORE_MESSAGES, { fetchPolicy: "network-only" });
 
-    let bool: boolean | undefined;
+    // let bool: boolean | undefined;
 
     let newLoading: boolean = false;
-    let noMoreMessages: boolean = false;
+    let noMoreMessages = useRef(false)
+    // let noMoreMessages: boolean = false;
     useEffect(() => {
         if (!fetchMoreData || fetchMoreLoading) {
             newLoading = true;
         } else if (fetchMoreData && fetchMoreData.fetchMoreMessages.length === 0) {
-            noMoreMessages = true;
+            noMoreMessages.current = true;
         } else if (
             fetchMoreData.fetchMoreMessages.length > 0 &&
             persistBool.current === "true"
         ) {
+            firstAndLast.current[0] = fetchMoreData.fetchMoreMessages[0];
+            firstAndLast.current[1] = fetchMoreData.fetchMoreMessages[fetchMoreData.fetchMoreMessages.length-1];
+            // noMoreMessages.current = false;
             setState([...state, ...fetchMoreData.fetchMoreMessages]);
         } else if (
             fetchMoreData.fetchMoreMessages.length > 0 &&
             persistBool.current === "false"
         ) {
+            firstAndLast.current[0] = fetchMoreData.fetchMoreMessages[0];
+            firstAndLast.current[1] = fetchMoreData.fetchMoreMessages[fetchMoreData.fetchMoreMessages.length-1];
+            // noMoreMessages.current = true;
             var reversedArray = [...fetchMoreData.fetchMoreMessages].reverse();
             setState([...reversedArray, ...state]);
         }
     }, [fetchMoreData]);
 
     const fetchHandler = (e: MouseEvent<HTMLButtonElement>) => {
-        console.log("Inside handler");
+        e.preventDefault()
         let mssgId;
+        let bool;
         persistBool.current = e.currentTarget.value;
-
-        if (e.currentTarget.value === "true") {
-            let allMessagesAreErrors = false;
-            for (let i = state.length - 1; i >= 0; i--) {
-                if ("datetime" in state[i]) {
-                    bool = true;
-                    mssgId = state[state.length - 1].messageId;
-                    allMessagesAreErrors = false;
-                    break;
-                } else {
-                    allMessagesAreErrors = true;
-                }
-            }
-            if (allMessagesAreErrors === true) {
-                setState([]);
-            }
-        } else {
-            let allMessagesAreErrors = false;
-            for (let i = 0; i < state.length - 1; i++) {
-                if ("datetime" in state[i]) {
-                    bool = false;
-                    mssgId = state[i].messageId;
-                    allMessagesAreErrors = false;
-                    break;
-                } else {
-                    allMessagesAreErrors = true;
-                }
-            }
-            if (allMessagesAreErrors === true) {
-                setState([]);
-            }
-        }
-
+        if (e.currentTarget.value === "true" ) {
+			bool = true;
+			mssgId = firstAndLast.current[1].messageId;
+		} else {
+			bool = false;
+			mssgId = firstAndLast.current[0].messageId;
+		}
+     
         fetchMoreMessages({
             variables: {
                 channelId: channelState.channel.channelID,
@@ -229,26 +235,20 @@ export default function ChatBoard() {
                 >
                     {channelState.channel.name}
                 </h1>
-                {emptyChat ? null : (
-                    <FetchButton
-                        style={{ marginBottom: "1em" }}
-                        value="true"
-                        onClick={fetchHandler}
-                    >
+               
+                    <FetchButton value="true" onClick={fetchHandler}>
                         Read More
                         <FaArrowUp />
                     </FetchButton>
-                )}
+               
                 <ChatRow>
-                    {loading || newLoading ? (
+                    {loading || fetchMoreLoading ? (
                         <p>Loading...</p>
                     ) : error ? (
-                        <p>{errorMessage}</p>
-                    ) : noMoreMessages ? (
-                        <p>No further messages</p>
+                        <p>There was an error loading the page</p>
                     ) : null}
-                    {emptyChat ? (
-                        <p>This chat is empty</p>
+                    {emptyChat.current ? (
+                        <p>This chat is empty, please send a message!</p>
                     ) : state ? (
                         state.map((user: any) => (
                             <div key={user.messageId}>
@@ -316,15 +316,20 @@ export default function ChatBoard() {
                         ))
                     ) : null}
                 </ChatRow>
-                {errorChat ? <div>Hey</div> : null}
-                {emptyChat ? null : (
+                {/* {errorChat ? <div>Hey</div> : null} */}
+               
                     <FetchButton value="false" onClick={fetchHandler}>
                         Read More
                         <FaArrowDown />
                     </FetchButton>
-                )}
+            
                 <PostMessage />
             </OuterContainer>
         </Col>
     );
 }
+
+
+// !noMoreMessages.current ? (
+//     <p>No further messages</p>
+// ) : 

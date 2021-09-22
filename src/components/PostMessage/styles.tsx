@@ -31,6 +31,10 @@ export const SendButton = styled.button`
 	border-radius: 0.25rem;
 	justify-content: space-evenly;
 	align-items: center;
+	cursor: pointer;
+	:hover{
+     background: #138496;
+}
 `;
 
 export const TextArea = styled.textarea`
@@ -51,4 +55,5 @@ export const TextArea = styled.textarea`
 	font-family: inherit;
 	color: #495057;
 	transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+	
 `;
