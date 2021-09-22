@@ -1,6 +1,7 @@
 import React, { useState, ChangeEvent, useEffect } from "react";
 import { gql, useMutation } from "@apollo/client";
 import { Form, SendButton, TextArea } from "./styles";
+import { v4 as uuidv4 } from 'uuid'
 
 import { useErrorDispatch } from "../../contexts/ErrorContext";
 import { FaPaperPlane } from "react-icons/fa";
@@ -96,7 +97,8 @@ export default function PostMessage(): JSX.Element {
 			})
 			.catch((err) => {
 				let errTime = new Date().toISOString();
-				let messId = errTime.toString();
+				// let messId = errTime.toString();
+				let messId = uuidv4();
 				errorDispatch({
 					type: "ERROR_MESSAGE",
 					payload: { ...message, messageId: messId, timeAtError: errTime },
