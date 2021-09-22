@@ -7,16 +7,19 @@ import React, {
     useEffect,
 } from "react";
 
-type TextState = {
-	text: string
-};
+
+interface TextState {
+	text: string;
+}
+
 
 interface TextStateProps {
 	children: ReactNode;
 }
+
 type TextAction = {
     type: string;
-    payload: string;
+    payload: string
 }
 type TextDispatch = (action: TextAction) => void;
 
@@ -36,10 +39,10 @@ const textReducer = (state: TextState, action: TextAction) => {
 	}
 };
 
-export const TextProvider: FC<TextStateProps> = ({ children }: { children: ReactNode }) => {
-    const [state, dispatch] = useReducer(textReducer, { text: "" }, () => {
-        const localData = localStorage.getItem('text')
-        return localData ? JSON.parse(localData) : { text: "" };
+export const TextProvider = ({ children }: { children: ReactNode }) => {
+	const [state, dispatch] = useReducer(textReducer, { text: "" }, () => {
+		const localData = localStorage.getItem('text')
+		return localData ? JSON.parse(localData) : { text: "" };
     });
     useEffect(() => {
         localStorage.setItem('text', JSON.stringify(state))

@@ -1,7 +1,7 @@
-import React, { useState, ChangeEvent, useEffect } from "react";
+import React, { useState, ChangeEvent, useEffect, useRef } from "react";
 import { gql, useMutation } from "@apollo/client";
 import { Form, SendButton, TextArea } from "./styles";
-import { v4 as uuidv4 } from 'uuid'
+import { v4 as uuidv4 } from 'uuid';
 
 import { useErrorDispatch } from "../../contexts/ErrorContext";
 import { FaPaperPlane } from "react-icons/fa";
@@ -29,9 +29,10 @@ interface PostMessageObject {
 	messageId?: string;
 }
 
+
 type TextAction = {
     type: string;
-    payload: string;
+	payload: string;
 }
 type TextDispatch = (action: TextAction) => void;
 
@@ -39,9 +40,10 @@ export default function PostMessage(): JSX.Element {
 	let errorDispatch = useErrorDispatch();
 	let userState = useUserState();
 	let channelState = useChannelState();
-    let textState = useTextState();
-	let dispatch: TextDispatch = useTextDispatch();
+	let textState = useTextState();
+	let textDispatch = useTextDispatch();
 	let sentDispatch = useSentDispatch()
+
 	const [message, setMessage] = useState<PostMessageObject>(
 		{} as PostMessageObject
 	);
@@ -49,25 +51,26 @@ export default function PostMessage(): JSX.Element {
 	console.log("Message: ", message);
 	const [postMessage, { error }] = useMutation(POST_MESSAGE);
 	console.log("First error check: ", { error });
-    // let textValue: string = "";
-    useEffect(() => {
-        // if (textState) {
-        //     textValue = textState.text;
-        // }
 
+	let textValue = useRef<string>("");
+
+	useEffect(() => {
+		
+		textValue.current = textState.text;
 		setMessage({
 			...message,
 			channelId: channelState.channel.channelID,
-			text: textState.text,
+			// text: textValue.current,
+			text: textValue.current,
 			userId: userState.user,
 		});
-    }, [userState, channelState]);
+	}, [userState, channelState]);
     
-    // useEffect(() => {
-    //     if (message.text) {
-    //         dispatch({type: "TEXT", payload: message.text})
-    //     }
-    // }, [message])
+	// useEffect(() => {
+	//     if (message.text) {
+	//         dispatch({type: "TEXT", payload: message.text})
+	//     }
+	// }, [message])
 
 	let errorMessage: string | undefined;
 	if (
@@ -77,38 +80,35 @@ export default function PostMessage(): JSX.Element {
 	) {
 		errorMessage = "Sorry your browser is offline.";
 	} else if (error?.networkError) {
-		console.log("Network error I think: ", error);
-		// localStorage.setItem("unsentMessage", JSON.stringify(message));
 		errorMessage = error?.message;
-		// console.log("unsent message: ", localStorage.getItem("unsentMessage"));
 	} else if (error?.graphQLErrors) {
 		console.log("error: ", error);
-		console.log("errorMessage: ", error.message);
 	}
 
 	const handleSubmit = (e: React.SyntheticEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        dispatch({ type: "TEXT", payload: "" });
-		e.currentTarget.reset();
-		postMessage({ variables: message })
-			.then((result) => {
-				sentDispatch({ type: "SENT_MESSAGE", payload: true})
-				console.log("Message sent");
-			})
-			.catch((err) => {
-				let errTime = new Date().toISOString();
-				// let messId = errTime.toString();
-				let messId = uuidv4();
-				errorDispatch({
-					type: "ERROR_MESSAGE",
-					payload: { ...message, messageId: messId, timeAtError: errTime },
+		e.preventDefault();
+		textDispatch({ type: "TEXT", payload: "" });
+		if (textValue.current !== "") {
+			textValue.current = "";
+			postMessage({ variables: message })
+				.then((result) => {
+					sentDispatch({ type: "SENT_MESSAGE", payload: true })
+					console.log("Message sent");
+				})
+				.catch((err) => {
+					let errTime = new Date().toISOString();
+					let messId = uuidv4();
+					errorDispatch({
+						type: "ERROR_MESSAGE",
+						payload: { ...message, messageId: messId, timeAtError: errTime },
+					});
 				});
-			});
+		}
 	};
-    // e: ChangeEvent<HTMLTextAreaElement>
-    const handleChange = (e: ChangeEvent<HTMLTextAreaElement>, dispatch: TextDispatch) => {
-        let text = e.target.value;
-        dispatch({ type: "TEXT", payload: text })
+	const handleChange = (e: ChangeEvent<HTMLTextAreaElement>, textDispatch: TextDispatch) => {
+		let text = e.target.value;
+		textValue.current = e.target.value
+		textDispatch({ type: "TEXT", payload: text });
 		setMessage({ ...message, text: e.target.value });
 	};
 
@@ -119,8 +119,8 @@ export default function PostMessage(): JSX.Element {
 					<TextArea
 						name="mssg"
 						placeholder="Type your message here..."
-                        onChange={e => handleChange(e, dispatch)}
-                        // value={textValue}
+                        onChange={e => handleChange(e, textDispatch)}
+                        value={textValue.current}
 					/>
 				</label>
 

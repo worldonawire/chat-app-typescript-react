@@ -51,17 +51,17 @@ function App() {
 		<ApolloProvider client={client}>
 			<UserProvider>
         <ChannelProvider>
+							<SentProvider>
           <TextProvider>
 						<ErrorProvider>
-							<SentProvider>
             			<GlobalStyle />
 							<Container>
 								<Navbar />
 								<ChatBoard />	
 							</Container>
-							</SentProvider>
 					</ErrorProvider>
           </TextProvider>
+							</SentProvider>
 				</ChannelProvider>
 			</UserProvider>
 		</ApolloProvider>
