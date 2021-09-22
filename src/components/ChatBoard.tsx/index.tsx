@@ -23,6 +23,7 @@ import {
 } from "react-icons/fa";
 import { Col } from "../../App.styles";
 import { useErrorDispatch, useErrorState } from "../../contexts/ErrorContext";
+import { useSentState } from "../../contexts/SentContext";
 
 const LATEST_MESSAGES = gql`
 	query fetchLatestMessages($channelId: String!) {
@@ -68,6 +69,7 @@ export default function ChatBoard() {
     let channelState = useChannelState();
     let errorState = useErrorState();
     let errorDispatch = useErrorDispatch();
+    let sentState = useSentState()
 
     const [state, setState] = useState<MessageObject[] | ErrorMessageObject[]>(
         []
@@ -110,7 +112,7 @@ export default function ChatBoard() {
         
         errorPolicy: "all",
     });
-    let emptyChat = useRef(false)
+    let emptyChat = useRef(true)
     // let emptyChat: boolean = false;
     let stateLoading: boolean = false;
 
@@ -161,20 +163,20 @@ export default function ChatBoard() {
     // let bool: boolean | undefined;
 
     let newLoading: boolean = false;
-    // let noMoreMessages = useRef(false)
-    let noMoreMessages: boolean = false;
+    let noMoreMessages = useRef(false)
+    // let noMoreMessages: boolean = false;
     useEffect(() => {
         if (!fetchMoreData || fetchMoreLoading) {
             newLoading = true;
         } else if (fetchMoreData && fetchMoreData.fetchMoreMessages.length === 0) {
-            noMoreMessages = true;
+            noMoreMessages.current = true;
         } else if (
             fetchMoreData.fetchMoreMessages.length > 0 &&
             persistBool.current === "true"
         ) {
             firstAndLast.current[0] = fetchMoreData.fetchMoreMessages[0];
             firstAndLast.current[1] = fetchMoreData.fetchMoreMessages[fetchMoreData.fetchMoreMessages.length-1];
-            noMoreMessages = false;
+            // noMoreMessages.current = false;
             setState([...state, ...fetchMoreData.fetchMoreMessages]);
         } else if (
             fetchMoreData.fetchMoreMessages.length > 0 &&
@@ -182,7 +184,7 @@ export default function ChatBoard() {
         ) {
             firstAndLast.current[0] = fetchMoreData.fetchMoreMessages[0];
             firstAndLast.current[1] = fetchMoreData.fetchMoreMessages[fetchMoreData.fetchMoreMessages.length-1];
-            noMoreMessages = false;
+            // noMoreMessages.current = true;
             var reversedArray = [...fetchMoreData.fetchMoreMessages].reverse();
             setState([...reversedArray, ...state]);
         }
@@ -201,7 +203,6 @@ export default function ChatBoard() {
 			mssgId = firstAndLast.current[0].messageId;
 		}
      
-
         fetchMoreMessages({
             variables: {
                 channelId: channelState.channel.channelID,
@@ -234,23 +235,17 @@ export default function ChatBoard() {
                 >
                     {channelState.channel.name}
                 </h1>
-                {emptyChat.current ? null : (
-                    <FetchButton
-                        style={{ marginBottom: "1em" }}
-                        value="true"
-                        onClick={fetchHandler}
-                    >
+               
+                    <FetchButton value="true" onClick={fetchHandler}>
                         Read More
                         <FaArrowUp />
                     </FetchButton>
-                )}
+               
                 <ChatRow>
                     {loading || fetchMoreLoading ? (
                         <p>Loading...</p>
                     ) : error ? (
                         <p>There was an error loading the page</p>
-                    ) : noMoreMessages ? (
-                        <p>No further messages</p>
                     ) : null}
                     {emptyChat.current ? (
                         <p>This chat is empty, please send a message!</p>
@@ -322,14 +317,19 @@ export default function ChatBoard() {
                     ) : null}
                 </ChatRow>
                 {/* {errorChat ? <div>Hey</div> : null} */}
-                {emptyChat.current ? null : (
+               
                     <FetchButton value="false" onClick={fetchHandler}>
                         Read More
                         <FaArrowDown />
                     </FetchButton>
-                )}
+            
                 <PostMessage />
             </OuterContainer>
         </Col>
     );
 }
+
+
+// !noMoreMessages.current ? (
+//     <p>No further messages</p>
+// ) : 

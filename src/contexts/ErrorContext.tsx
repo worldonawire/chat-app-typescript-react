@@ -6,13 +6,15 @@ import React, {
 	FC,
 } from "react";
 
+
 interface ErrorState {
-	errMessage: {
-		messageId: string;
-		text: string;
-		userId: string;
-		timeAtError: string | undefined;
-	};
+		errMessage: {
+			messageId: string;
+			text: string;
+			userId: string;
+			timeAtError: string | undefined;
+		}
+	
 }
 
 interface ErrorStateProps {
@@ -26,7 +28,7 @@ interface ErrorAction {
 		text: string;
 		userId: string;
 		timeAtError: string | undefined;
-	};
+	},
 }
 
 type ErrorDispatch = (action: ErrorAction) => void;
@@ -35,13 +37,14 @@ type ErrorDispatch = (action: ErrorAction) => void;
 const ErrorStateContext = createContext({} as ErrorState);
 const ErrorDispatchContext = createContext({} as ErrorDispatch);
 
+
 const errorReducer = (state: ErrorState, action: ErrorAction): ErrorState => {
 	switch (action.type) {
 		case "ERROR_MESSAGE":
 			return {
 				...state,
 				errMessage: action.payload,
-			};
+			}
 		default:
 			throw new Error(`Unkown action type: ${action.type}`);
 	}
@@ -58,7 +61,7 @@ export const ErrorProvider: FC<ErrorStateProps> = ({
 			text: " ",
 			userId: " ",
 			timeAtError: undefined,
-		},
+		}
 	});
 	return (
 		<ErrorDispatchContext.Provider value={dispatch}>

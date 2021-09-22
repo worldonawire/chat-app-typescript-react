@@ -7,6 +7,7 @@ import { FaPaperPlane } from "react-icons/fa";
 import { useChannelState } from "../../contexts/ChannelContext";
 import { useUserState } from "../../contexts/UserContext";
 import { useTextDispatch, useTextState } from "../../contexts/TextContext";
+import { useSentDispatch } from "../../contexts/SentContext";
 
 const POST_MESSAGE = gql`
 	mutation postMessage($channelId: String!, $text: String!, $userId: String!) {
@@ -38,7 +39,8 @@ export default function PostMessage(): JSX.Element {
 	let userState = useUserState();
 	let channelState = useChannelState();
     let textState = useTextState();
-    let dispatch: TextDispatch = useTextDispatch();
+	let dispatch: TextDispatch = useTextDispatch();
+	let sentDispatch = useSentDispatch()
 	const [message, setMessage] = useState<PostMessageObject>(
 		{} as PostMessageObject
 	);
@@ -75,9 +77,9 @@ export default function PostMessage(): JSX.Element {
 		errorMessage = "Sorry your browser is offline.";
 	} else if (error?.networkError) {
 		console.log("Network error I think: ", error);
-		localStorage.setItem("unsentMessage", JSON.stringify(message));
+		// localStorage.setItem("unsentMessage", JSON.stringify(message));
 		errorMessage = error?.message;
-		console.log("unsent message: ", localStorage.getItem("unsentMessage"));
+		// console.log("unsent message: ", localStorage.getItem("unsentMessage"));
 	} else if (error?.graphQLErrors) {
 		console.log("error: ", error);
 		console.log("errorMessage: ", error.message);
@@ -89,6 +91,7 @@ export default function PostMessage(): JSX.Element {
 		e.currentTarget.reset();
 		postMessage({ variables: message })
 			.then((result) => {
+				sentDispatch({ type: "SENT_MESSAGE", payload: true})
 				console.log("Message sent");
 			})
 			.catch((err) => {
